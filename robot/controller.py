@@ -57,17 +57,17 @@ def back_kinematics(steer_angles, wheel_speeds):
 
 def on_press(key):
     if key == keyboard.Key.up:
-        target[1] = 100.0
+        target[1] = 5.0
     elif key == keyboard.Key.down:
-        target[1] = -100.0
+        target[1] = -5.0
     elif key == keyboard.Key.left:
-        target[0] = -100.0
+        target[0] = -5.0
     elif key == keyboard.Key.right:
-        target[0] = 100.0
+        target[0] = 5.0
     elif key == keyboard.Key.shift_l:
-        target[2] = -100.0
+        target[2] = -10.0
     elif key == keyboard.Key.shift_r:
-        target[2] = 100.0
+        target[2] = 10.0
     elif key == keyboard.Key.alt_l:
         target_yaw -= 0.1
     elif key == keyboard.Key.alt_r:
@@ -112,7 +112,7 @@ with mujoco.viewer.launch_passive(m, d) as viewer:
         vx = target[0] * math.cos(err_angle) + target[1] * math.sin(err_angle)
         vy = -target[0] * math.sin(err_angle) + target[1] * math.cos(err_angle)
         
-        forward_kinematics(vx, vy, 300.0)
+        forward_kinematics(vx, vy, 10.0)
         
         d.ctrl[8] = -yaw_pid.position_pid(yaw_target, yaw_gimbal)
         
