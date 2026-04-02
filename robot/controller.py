@@ -111,7 +111,9 @@ with mujoco.viewer.launch_passive(m, d) as viewer:
         err_angle = yaw_gimbal - yaw_chassis
         vx = target[0] * math.cos(err_angle) + target[1] * math.sin(err_angle)
         vy = -target[0] * math.sin(err_angle) + target[1] * math.cos(err_angle)
-        
+        if vy == -0.0:
+            vy = 0.0
+        # print(vy)
         forward_kinematics(vx, vy, 10.0)
         
         d.ctrl[8] = -yaw_pid.position_pid(yaw_target, yaw_gimbal)
