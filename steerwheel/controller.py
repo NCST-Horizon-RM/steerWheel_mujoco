@@ -1,9 +1,12 @@
 import math
 from pynput import keyboard
 import threading
+from mpc import SimpleMPC
+import numpy as np
+from mpc import MPC
 
 class Controller:
-    def __init__(self):
+    def __init__(self, dt=0.01):
         self.R = 0.4 
         self.r = 0.05
 
@@ -12,7 +15,10 @@ class Controller:
 
         self.target = [0, 0, 0]  # vx vy vw
 
-        self._start_keyboard()
+        self.mpc = MPC(dt)
+        self.state = np.zeros(3)   # [X, Y, theta]
+        self.ref = np.array([1.0, 1.0, 1.0])  # 目标点
+        # self._start_keyboard()
 
     # 正运动学解算函数
     def forward_kinematics(self, vx, vy, w):
@@ -55,6 +61,23 @@ class Controller:
         thread = threading.Thread(target=self._listen_keyboard)
         thread.start()
 
-    def update(self):
-        self.forward_kinematics(*self.target)
+    # def update(self):
+    #     self.forward_kinematics(*self.target)
+    #     return self.steer_output, self.wheel_output
+    
+    def update_state(self, d):
+        # 从 mujoco 读取 base 位姿（你需要根据模型改）
+        self.state[0] = d.qpos[0]
+        self.state[1] = d.qpos[1]
+        self.state[2] = d.qpos[2]
+
+    def update(self, d):
+        self.update_state(d)
+
+        u = self.mpc.solve(self.state, self.ref)
+
+        vx, vy, w = u
+
+        self.forward_kinematics(vx, vy, w)
+
         return self.steer_output, self.wheel_output
