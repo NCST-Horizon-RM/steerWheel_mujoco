@@ -52,7 +52,7 @@ class MPC:
         self.dt = dt
         self.N = N  # prediction horizon
 
-        self.Q = np.diag([10.0, 10.0, 5.0])
+        self.Q = np.diag([10.0, 10.0, 10.0])
         self.R = np.diag([0.1, 0.1, 0.1])
 
     # =========================

@@ -17,8 +17,9 @@ class Controller:
 
         self.mpc = MPC(dt)
         self.state = np.zeros(3)   # [X, Y, theta]
-        self.ref = np.array([1.0, 1.0, 1.0])  # 目标点
+        self.ref = np.array([1.0, 5.0, -10.0])  # 目标点
         # self._start_keyboard()
+        self.theta = [0.0, 0.0, 0.0]  
 
     # 正运动学解算函数
     def forward_kinematics(self, vx, vy, w):
@@ -69,8 +70,38 @@ class Controller:
         # 从 mujoco 读取 base 位姿（你需要根据模型改）
         self.state[0] = d.qpos[0]
         self.state[1] = d.qpos[1]
-        self.state[2] = d.qpos[2]
+        # Quaternion from qpos (assuming free joint)
+        quat = d.qpos[3:7]          # [w, x, y, z]
+        self.theta[0] = self.quat_to_euler(quat)[2]   # yaw
 
+        if self.theta[0] - self.theta[1] > np.pi:
+            self.theta[2] -= 1
+        elif self.theta[0] - self.theta[1] < -np.pi:
+            self.theta[2] += 1
+        self.theta[1] = self.theta[0]
+
+        self.state[2] = self.theta[0] + self.theta[2] * 2 * np.pi  # unwrapped angle
+
+    def quat_to_euler(self, quat):
+        """Convert quaternion [w,x,y,z] → roll, pitch, yaw"""
+        w, x, y, z = quat
+
+        # roll (x-axis)
+        sinr_cosp = 2 * (w * x + y * z)
+        cosr_cosp = 1 - 2 * (x * x + y * y)
+        roll = np.arctan2(sinr_cosp, cosr_cosp)
+
+        # pitch (y-axis)
+        sinp = 2 * (w * y - z * x)
+        pitch = np.arcsin(np.clip(sinp, -1.0, 1.0))
+
+        # yaw (z-axis)
+        siny_cosp = 2 * (w * z + x * y)
+        cosy_cosp = 1 - 2 * (y * y + z * z)
+        yaw = np.arctan2(siny_cosp, cosy_cosp)
+
+        return np.array([roll, pitch, yaw])
+    
     def update(self, d):
         self.update_state(d)
 
